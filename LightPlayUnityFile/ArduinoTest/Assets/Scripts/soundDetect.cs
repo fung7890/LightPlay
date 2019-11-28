@@ -11,13 +11,14 @@ public class soundDetect : MonoBehaviour {
 	public bool onScreen, onLED;
 	Collider tmp_other;
 	public SerialPort serial = new SerialPort ("COM3", 9600);
-	GameObject onScreenNotification, canvas, onScreenImage;
+	GameObject onScreenNotification, canvas, onScreenImage, notifColor;
 	RectTransform onScreenNotificationPos;
 	float screenHeight, screenWidth;
 	int topLEDCount = 32;
 	int sideLEDCount = 20;
 	int c1, c2, LEDToAdd;
 	Color onScreenColor;
+	public bool trig;
 
 	// void Awake() {
 	// // 	print("test");
@@ -30,9 +31,15 @@ public class soundDetect : MonoBehaviour {
 	// 	print(onScreenColor);
 
 	// }
+
+	void Awake() {
+		serial.Open(); // open for arduino
+		notifColor = GameObject.FindWithTag("notifColor");
+
+	}
 	// Use this for initialization
 	void Start () {
-		serial.Open(); // open for arduino
+		trig = true;
 
 		onScreenNotification = GameObject.FindWithTag("onScreenNotification");
 		canvas = GameObject.FindWithTag("canvas");
@@ -51,18 +58,44 @@ public class soundDetect : MonoBehaviour {
 
 	void OnTriggerEnter(Collider other) {
 		tmp_other = other;
-		if (other.tag == "sound1") {
-			print("DETECTED SOUND1");
+		if (other.tag == "sound2") {
+			print("DETECTED SOUND1");	
 
-			if (onScreen) {
-				InvokeRepeating("onScreenInput", 0, 0.1f);
-			}
+			// if (onScreen) {
+			// 	InvokeRepeating("onScreenInput", 0, 0.1f);
+			// }
 
-			if (onLED){
-				InvokeRepeating("arduinoInput", 0, 0.05f);
-			}
+			// if (onLED){
+			// 	InvokeRepeating("arduinoInput", 0, 0.05f);
+			// }
 		}
 	}
+
+	public void onScreenActivate() {
+		InvokeRepeating("onScreenInput", 0, 0.1f);
+	}
+
+	public void onLEDActivate() {
+		InvokeRepeating("arduinoInput", 0, 0.1f);
+	}
+
+
+	// void OnTriggerStay(Collider other) {
+	// 	if (trig) {
+	// 		tmp_other = other;
+	// 		if (other.tag == "sound1") {
+	// 			print("DETECTED SOUND1");
+
+	// 			if (onScreen) {
+	// 				InvokeRepeating("onScreenInput", 0, 0.1f);
+	// 			}
+
+	// 			if (onLED){
+	// 				InvokeRepeating("arduinoInput", 0, 0.05f);
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	void OnTriggerExit(Collider other) {
 		if (other.tag == "sound1") { 
@@ -73,7 +106,10 @@ public class soundDetect : MonoBehaviour {
 
 	// returns which position needed corresponding to angle of object of interest in Unity 
 	int LedPosCalc() {
+
+		if (tmp_other == null) { return -1;}
 		Vector3 otherDir = tmp_other.transform.position - this.transform.position;
+
 		Vector3 forward = this.transform.forward; 
 		float angle = Vector3.SignedAngle(otherDir, forward, Vector3.up);
 
@@ -104,33 +140,40 @@ public class soundDetect : MonoBehaviour {
 		}
 		
 		output_led_pos = (int)System.Math.Round(led_pos, 0); 	   // round to nearest int 
-		// print(output_led_pos);
 		return output_led_pos;
 	}
 
 	// calculate distance: map it to range of color gradient and amount of leds to light
 	void calcAdditionalValues() {
-		float percentageDist;
-		float dist = Vector3.Distance(tmp_other.transform.position, this.transform.position); // distance to sound, starts at max distance 
-		percentageDist = dist / tmp_other.transform.parent.GetComponent<AudioSource>().maxDistance; // percentage based off max distance 
+		if (tmp_other != null) {
+			float percentageDist;
+			float dist = Vector3.Distance(tmp_other.transform.position, this.transform.position); // distance to sound, starts at max distance 
+			percentageDist = dist / tmp_other.transform.parent.GetComponent<AudioSource>().maxDistance; // percentage based off max distance 
 
-		// color calc: green to red
-		c1 = (int)(percentageDist * 255);
-		c2 = 255 - c1;
+			// color calc: green to red
+			c1 = (int)(percentageDist * 255);
+			c2 = 255 - c1;
 
-		// amount of leds to light based off distance with max of 4 and min of 1 (on each side)
-		if (percentageDist <= 0.25) {
-			LEDToAdd = 4;	
-		} else if (percentageDist > 0.25 & percentageDist <= 0.5) {
-			LEDToAdd = 3;	
-		} else if (percentageDist > 0.5 & percentageDist <= 0.75) {
-			LEDToAdd = 2;	
-		} else {
-			LEDToAdd = 1;	
+			// amount of leds to light based off distance with max of 4 and min of 1 (on each side)
+			if (percentageDist <= 0.25) {
+				LEDToAdd = 4;	
+			} else if (percentageDist > 0.25 & percentageDist <= 0.5) {
+				LEDToAdd = 3;	
+			} else if (percentageDist > 0.5 & percentageDist <= 0.75) {
+				LEDToAdd = 2;	
+			} else {
+				LEDToAdd = 1;	
+			}
+
 		}
 	}
 
-
+	public void resetLight() {
+		tmp_other = null;
+		print("RESETTING LIGHTS");
+		CancelInvoke();
+		serial.Write("A");
+	}
 
 	// send led position to arduino for led representation
 	void arduinoInput() {
@@ -145,38 +188,44 @@ public class soundDetect : MonoBehaviour {
 
 	// send position to Unity for on screen representation 
 	void onScreenInput() {
-		calcAdditionalValues();    // calculate amount of LEDs to add on the sides (more lights)
-		int dataIn = LedPosCalc(); // position
 
-		float indicatorPos;
-		float tmpScreenWidth = screenWidth*2;   // preprocess screenWidth for use
-		float tmpScreenHeight = screenHeight*2; // preprocess screenHeight for use
+		if (tmp_other != null){
+			calcAdditionalValues();    // calculate amount of LEDs to add on the sides (more lights)
+			int dataIn = LedPosCalc(); // position
+
+			float indicatorPos;
+			float tmpScreenWidth = screenWidth*2;   // preprocess screenWidth for use
+			float tmpScreenHeight = screenHeight*2; // preprocess screenHeight for use
 
 
-		// resize, rotate, and move on screen indicator (resize is off for now)
-		if (dataIn <= 19) { // right side of monitor 
-			// resizeOnScreenInput("right", tmpScreenWidth, tmpScreenHeight);
-			indicatorPos = dataIn * (tmpScreenHeight / sideLEDCount) + (tmpScreenHeight / sideLEDCount)/2.0f ; // calculate position of indicator
-			onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 90); 					       // rotate to 90 degrees
-			onScreenNotificationPos.anchoredPosition = new Vector3(tmpScreenWidth - 20, indicatorPos, 0);      // move it
-		} else if (dataIn >= 20 & dataIn <= 51) { // top of monitor
-			// resizeOnScreenInput("top", tmpScreenWidth, tmpScreenHeight);
-			dataIn = -1*dataIn + 51; 																	       // rescale to 0 and make it so 0th pos is on the left
-			indicatorPos = dataIn * (tmpScreenWidth / topLEDCount) + (tmpScreenWidth / topLEDCount)/2.0f ; 
-			onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 0); 						       // rotate to original form
-			onScreenNotificationPos.anchoredPosition = new Vector3(indicatorPos, tmpScreenHeight - 20, 0);     // move it
-		} else if (dataIn >= 52 & dataIn <= 71) { // left side of monitor
-			// resizeOnScreenInput("right", tmpScreenWidth, tmpScreenHeight);
-			dataIn = -1*dataIn + 71; 							 										       // rescale to 0 and make it so 0th pos is on the bottom
-			indicatorPos = dataIn * (tmpScreenHeight / sideLEDCount) + (tmpScreenHeight / sideLEDCount)/2.0f ; 
-			onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 90); 
-			onScreenNotificationPos.anchoredPosition = new Vector3( 20, indicatorPos, 0); 
-		} else if (dataIn >= 72 & dataIn <= 103) { // bottom of monitor
-			// resizeOnScreenInput("top", tmpScreenWidth, tmpScreenHeight);
-			dataIn = dataIn - 72; 																		       // rescale to 0 
-			indicatorPos = dataIn * (tmpScreenWidth / topLEDCount) + (tmpScreenWidth / topLEDCount)/2.0f ; 
-			onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 0); 						       // rotate to original form
-			onScreenNotificationPos.anchoredPosition = new Vector3(indicatorPos, 20, 0); 				       // move it
+			// resize, rotate, and move on screen indicator (resize is off for now)
+			if (dataIn <= 19) { // right side of monitor 
+				// resizeOnScreenInput("right", tmpScreenWidth, tmpScreenHeight);
+				indicatorPos = dataIn * (tmpScreenHeight / sideLEDCount) + (tmpScreenHeight / sideLEDCount)/2.0f ; // calculate position of indicator
+				onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 90); 					       // rotate to 90 degrees
+				onScreenNotificationPos.anchoredPosition = new Vector3(tmpScreenWidth, indicatorPos, 0);      // move it
+			} else if (dataIn >= 20 & dataIn <= 51) { // top of monitor
+				// resizeOnScreenInput("top", tmpScreenWidth, tmpScreenHeight);
+				dataIn = -1*dataIn + 51; 																	       // rescale to 0 and make it so 0th pos is on the left
+				indicatorPos = dataIn * (tmpScreenWidth / topLEDCount) + (tmpScreenWidth / topLEDCount)/2.0f ; 
+				onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 0); 						       // rotate to original form
+				onScreenNotificationPos.anchoredPosition = new Vector3(indicatorPos, tmpScreenHeight, 0);     // move it
+			} else if (dataIn >= 52 & dataIn <= 71) { // left side of monitor
+				// resizeOnScreenInput("right", tmpScreenWidth, tmpScreenHeight);
+				dataIn = -1*dataIn + 71; 							 										       // rescale to 0 and make it so 0th pos is on the bottom
+				indicatorPos = dataIn * (tmpScreenHeight / sideLEDCount) + (tmpScreenHeight / sideLEDCount)/2.0f ; 
+				onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 90); 
+				onScreenNotificationPos.anchoredPosition = new Vector3(0, indicatorPos, 0); 
+			} else if (dataIn >= 72 & dataIn <= 103) { // bottom of monitor
+				// resizeOnScreenInput("top", tmpScreenWidth, tmpScreenHeight);
+				dataIn = dataIn - 72; 																		       // rescale to 0 
+				indicatorPos = dataIn * (tmpScreenWidth / topLEDCount) + (tmpScreenWidth / topLEDCount)/2.0f ; 
+				onScreenNotificationPos.transform.eulerAngles = new Vector3(0 , 0, 0); 						       // rotate to original form
+				onScreenNotificationPos.anchoredPosition = new Vector3(indicatorPos,0, 0); 				       // move it
+			}
+
+			notifColor.SetActive(true);
+
 		}
 	}
 
