@@ -192,11 +192,17 @@ public class main : MonoBehaviour {
 			instructionTxt.SetActive(true);
 			// display text for instruction
 			if (condition == 1) {
-				displayText("condition 1 upcoming");		
+				displayText(@"First Task: Hover your mouse over the highlighted box, it will continously change so try your best to follow it.
+
+Second Task: (Please put on the headset) Click on the box you feel is making the sound. You won't progress until you find the right box so just keep trying!");		
 			} else if (condition == 2) {
-				displayText("condition 2 upcoming");	
+				displayText(@"First Task: Hover your mouse over the highlighted box, it will continously change so try your best to follow it.
+
+Second Task: Click on the box when the on-screen indicator is in front you (top of the screen). You won't progress until you find the right box so just keep trying!");	
 			} else {
-				displayText("condition 3 upcoming");	
+				displayText(@"First Task: Hover your mouse over the highlighted box, it will continously change so try your best to follow it.
+				
+Second Task: Click on the box when the ambient light indicator is in front you (top of the monitor). You won't progress until you find the right box so just keep trying!");	
 			}
 			yield return new WaitUntil(() => pause == false);
 			instructionTxt.SetActive(false);
