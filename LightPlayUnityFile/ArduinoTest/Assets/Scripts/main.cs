@@ -18,9 +18,22 @@ public class main : MonoBehaviour {
 	List<List<float>> allTimes = new List<List<float>>(); // for all conditions 
 	List<float> conditionTimes = new List<float>(); // for each condition
 	Vector3 lookDir;
-	int[] order1 = {2,5,6,16,10,3,7,11,14,12,9,4,12,9,5,3,6,13,14,8};
-	int[] order2 = {6,11,9,3,16,9,8,5,13,12,12,7,5,2,4,10,3,14,6,14};
-	int[] order3 = {13,11,8,2,5,9,9,7,6,6,12,4,14,3,3,14,5,16,12,10};
+
+	// old static order 
+	// int[] order1 = {2,5,6,16,10,3,7,11,14,12,9,4,12,9,5,3,6,13,14,8};
+	// int[] order2 = {6,11,9,3,16,9,8,5,13,12,12,7,5,2,4,10,3,14,6,14};
+	// int[] order3 = {13,11,8,2,5,9,9,7,6,6,12,4,14,3,3,14,5,16,12,10};
+
+	// test order
+	// int[] order1 = {,,,,,,,,,,,,,,,,,,,};
+	// int[] order2 = {,,,,,,,,,,,,,,,,,,,};
+	// int[] order3 = {,,,,,,,,,,,,,,,,,,,};
+
+	// ordering
+	int[] order1 = new int[20];
+	int[] order2 = new int[20];
+	int[] order3 = new int[20];
+
 	int[] tmpOrder;
 	List<int> conditionsRan = new List<int>(); // conditions already ran
 	int currTarget;
@@ -90,7 +103,6 @@ public class main : MonoBehaviour {
 		soundDict.Add(15,s15);
 		soundDict.Add(16,s16);
 
-
 		trigDict.Add(1,t1);
 		trigDict.Add(2,t2);
 		trigDict.Add(3,t3);
@@ -108,8 +120,19 @@ public class main : MonoBehaviour {
 		trigDict.Add(15,t15);
 		trigDict.Add(16,t16);
 
-	}
+		// setting up ordering
+		for(int i = 0; i < 20; i++){
+			order1[i] = rnd.Next(1,17);
+			order2[i] = rnd.Next(1,17);
+			order3[i] = rnd.Next(1,17);
+		} 
 
+		// print order for test;
+		// for(int j=0; j<20; j++) {
+		// 	print(order1[j].ToString() + " " + order2[j].ToString() + " " + order3[j].ToString());
+		// }
+	}
+	
 	// Use this for initialization
 	void Start () {
 		csv = new StringBuilder();  
@@ -173,8 +196,6 @@ public class main : MonoBehaviour {
 
 	IEnumerator run()
     {	
-
-
 		// on each condition
 		for (int x=0; x<3; x++) {
 			// random condition selection 
@@ -280,19 +301,30 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 
 		}
 
-		// var writer = new StreamWriter();
+		// final message after all conditions
+		instructionTxt.SetActive(true);
+		displayText("Thank you for participating!");
+
+		// write results to csv named result.csv
+		DateTime now = DateTime.Now; // current date and time
+
 		for (int j=0; j<3; j++) {
 			csv.Append("condition ");
-			csv.Append(j.ToString());
+			csv.Append(conditionsRan[j].ToString());
 			csv.Append(",");
 			foreach (float i in allTimes[j]) {
 				csv.Append(i);
 				csv.Append(",");
 			}
 		}
+		csv.Append(",");
+		csv.Append(now);
 		csv.AppendLine(" ");
-		File.AppendAllText("./result.csv", csv.ToString());
-
+		try {
+			File.AppendAllText("./result.csv", csv.ToString());
+		} catch {
+			File.AppendAllText("./BACKUPresult.csv", csv.ToString());
+		}
     }
 
 	public void continueGame() {
