@@ -1,6 +1,6 @@
 WindowsStandalone
 PlayerPath?
-C:/Users/Kenny/Desktop/Desktop/Thesis/Exec/ArduinoTest.exe
+C:/Users/Kenny/Documents/GitHub/LightPlayExecForStudy/ArduinoTest.exe
 SceneListBegin?
 Assets/audioTest.unity
 SceneListEnd?

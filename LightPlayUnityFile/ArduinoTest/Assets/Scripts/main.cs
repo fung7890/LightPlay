@@ -13,10 +13,12 @@ public class main : MonoBehaviour {
 	private Transform midOfPreGame;
 	System.Random rnd = new System.Random();
 	int randNum, nothing;
-	float currTimerValue;
-	bool secondaryTaskDone;
+	float currTimerValue, noticeabilityTimeValue;
+	bool secondaryTaskDone, recordNoticeability;
 	List<List<float>> allTimes = new List<List<float>>(); // for all conditions 
+	List<List<float>> allNoticeabilityTimes = new List<List<float>>(); // for all noticeabilityTimes
 	List<float> conditionTimes = new List<float>(); // for each condition
+	List<float> noticeabilityTimes = new List<float>(); // for noticeability times 
 	Vector3 lookDir;
 
 	// old static order 
@@ -25,9 +27,9 @@ public class main : MonoBehaviour {
 	// int[] order3 = {13,11,8,2,5,9,9,7,6,6,12,4,14,3,3,14,5,16,12,10};
 
 	// test order
-	// int[] order1 = {,,,,,,,,,,,,,,,,,,,};
-	// int[] order2 = {,,,,,,,,,,,,,,,,,,,};
-	// int[] order3 = {,,,,,,,,,,,,,,,,,,,};
+	// int[] order1 = {16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16};
+	// int[] order2 = {16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16};
+	// int[] order3 = {16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16};
 
 	// ordering
 	int[] order1 = new int[20];
@@ -46,6 +48,7 @@ public class main : MonoBehaviour {
 	void Awake() {
 		pause = false;
 		secondaryTaskDone = true;
+		recordNoticeability = false;
 		cam = GameObject.FindWithTag("MainCamera");
 		cam.GetComponent<preGame>().enabled = false;
 		preGameObj = GameObject.FindWithTag("preGameObject");
@@ -239,8 +242,10 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 				tmpOrder = order3;
 			}
 
-			for (int i=0; i<1; i++){ // each iteration 
-				currTimerValue = 0; // reset value
+			for (int i=0; i<2; i++){ // each iteration 
+				currTimerValue = 0; // reset acquistion time 
+				noticeabilityTimeValue = 0; // reset noticeability time 
+
 				print("VALUE IS");
 				print(currTarget);
 				
@@ -248,16 +253,27 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 				randNum = rnd.Next(5, 10);
 				yield return new WaitForSeconds(randNum);
 
-				// player.GetComponent<soundDetect>().onLEDActivate();
-				// player.GetComponent<soundDetect>().onScreenActivate();
 
-				cam.GetComponent<preGame>().enabled = false;
-
-				// turn off object of pregame 	
-				preGameObj.SetActive(false);
+				cam.GetComponent<preGame>().enabled = false; // turn off cam select for primary task
 
 				// start secondary task
 				secondaryTaskDone = false;
+
+				// start recording noticeability time
+				recordNoticeability = true;
+
+				// wait until spacebar is pressed for noticeability
+				// pause = true;
+				// yield return new WaitUntil(() => pause == false);  
+
+				// record noticeability time and turn off recording
+				// recordNoticeability = false;
+				// noticeabilityTimes.Add(noticeabilityTimeValue);
+
+				// print("recorded noticeability, now recording acquisition time");
+
+				// preGameObj.SetActive(false); // turn off object of pregame 	
+
 
 				//  audio only
 				if (condition == 1) { // CHANGE FROM TRIGDICT TO ORDER1DICT
@@ -293,6 +309,11 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 			allTimes.Add(tmpList);
 			conditionTimes.Clear();
 
+			// add noticeabiliy times to all times and clear for the next condition
+			List<float> tmpList2 = new List<float>(noticeabilityTimes);
+			allNoticeabilityTimes.Add(tmpList2);
+			noticeabilityTimes.Clear();
+
 			// pause for TLX
 			// pause = true;
 			// contButton.SetActive(true);
@@ -308,12 +329,29 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 		// write results to csv named result.csv
 		DateTime now = DateTime.Now; // current date and time
 
+
+		// adjust allTimes to get acquired time 
+		// for (int m=0; m<3; m++) {
+		// 	List<float> tmp = new List<float>(allTimes);
+
+		// 	for (int k=0; k<allTimes[0].Count; k++) {
+		// 		allTimes[m][k] -= allNoticeabilityTimes[m][k];
+		// 	}
+		// }
+
 		for (int j=0; j<3; j++) {
 			csv.Append("condition ");
 			csv.Append(conditionsRan[j].ToString());
 			csv.Append(",");
 			foreach (float i in allTimes[j]) {
 				csv.Append(i);
+				csv.Append(",");
+			}
+
+			csv.Append("Noticeability Times");
+			csv.Append(",");
+			foreach(float k in allNoticeabilityTimes[j]) {
+				csv.Append(k);
 				csv.Append(",");
 			}
 		}
@@ -355,21 +393,36 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 
 		if (!secondaryTaskDone) {
 			currTimerValue += Time.deltaTime;
-			
-			if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out TheHit)){
-				// print(TheHit.transform.name);
-				if (TheHit.transform.name == ("s" + tmpOrder[currTarget].ToString())  && (Input.GetMouseButtonDown(0))) {
-					print("HIT TARGET BOX");
-					secondaryTaskDone = true;
-				} else if (Input.GetMouseButtonDown(0)) {
-					conditionTimes.Add(-1.0f);
+			if (!recordNoticeability) {
+				if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out TheHit)){
+					// print(TheHit.transform.name);
+					if (TheHit.transform.name == ("s" + tmpOrder[currTarget].ToString())  && (Input.GetMouseButtonDown(0))) {
+						print("HIT TARGET BOX");
+						secondaryTaskDone = true;
+					} else if (Input.GetMouseButtonDown(0)) {
+						conditionTimes.Add(-1.0f);
+					}
 				}
 			}
 		}
 
-		if (Input.GetKeyDown(KeyCode.Space))
+		if (recordNoticeability) {
+			noticeabilityTimeValue += Time.deltaTime;
+		}
+
+		if (Input.GetKeyDown(KeyCode.Return))
         {
             continueGame();
         }
+
+		if (Input.GetKeyDown(KeyCode.Space) && recordNoticeability) {
+			// stop recording and turn off primary task 
+			recordNoticeability = false;
+			noticeabilityTimes.Add(noticeabilityTimeValue);
+
+			print("recorded noticeability, now recording acquisition time");
+
+			preGameObj.SetActive(false); // turn off object of pregame 	
+		}
 	}	
 }
