@@ -242,7 +242,7 @@ Second Task: Click on the box when the ambient light indicator is in front you (
 				tmpOrder = order3;
 			}
 
-			for (int i=0; i<2; i++){ // each iteration 
+			for (int i=0; i<15; i++){ // each iteration 
 				currTimerValue = 0; // reset acquistion time 
 				noticeabilityTimeValue = 0; // reset noticeability time 
 
