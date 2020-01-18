@@ -10,7 +10,8 @@ public class soundDetect : MonoBehaviour {
 	private bool detected;
 	public bool onScreen, onLED;
 	Collider tmp_other;
-	public SerialPort serial = new SerialPort ("COM3", 9600);
+	// public SerialPort serial = new SerialPort ("COM3", 9600); // FOR YOUR COMPUTER
+	public SerialPort serial = new SerialPort ("COM5", 9600); // FOR GABI'S COM
 	GameObject onScreenNotification, canvas, onScreenImage, notifColor;
 	RectTransform onScreenNotificationPos;
 	float screenHeight, screenWidth;
