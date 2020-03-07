@@ -36,7 +36,7 @@ public class soundDetect : MonoBehaviour
 
     void Awake()
     {
-        serial.Open(); // open for arduino
+        serial.Open(); // open for arduino   
         notifColor = GameObject.FindWithTag("notifColor");
 
     }
@@ -86,6 +86,14 @@ public class soundDetect : MonoBehaviour
     {
         InvokeRepeating("arduinoInput", 0, 0.1f);
     }
+
+    // public void onAllLightOnActivate() {
+
+    //     InvokeRepeating("arduinoInput", 0, 0.1f);
+
+    // }
+
+
 
 
     // void OnTriggerStay(Collider other) {
@@ -218,6 +226,21 @@ public class soundDetect : MonoBehaviour
         }
         serial.Write(dataIn.ToString() + " " + LEDToAdd.ToString() + " " + c1.ToString() + " " + c2.ToString() + "\n");
     }
+
+    public void allLightsOn(int color)
+    {
+        if (serial.IsOpen == false)
+        {
+            serial.Open();
+        }
+        serial.Write(color.ToString() + "\n");
+    }
+
+    public void allLightsOff()
+    {
+        serial.Write("A");
+    }
+
 
     // send position to Unity for on screen representation 
     void onScreenInput()

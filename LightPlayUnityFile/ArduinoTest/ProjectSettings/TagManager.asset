@@ -37,6 +37,10 @@ TagManager:
   - sound16
   - continue
   - instruction
+  - onScreenNotif
+  - notifColor2
+  - notifColor3
+  - notifColor4
   layers:
   - Default
   - TransparentFX
