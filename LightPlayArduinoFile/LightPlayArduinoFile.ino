@@ -16,6 +16,7 @@ void setup() {
   strip.show(); // initialize to all off
   strip.setBrightness(200);
 
+  
 //  for (int i=0; i<104; ++i) { // 38 start from arduino
 //    arr1[i] = i + 38;
 //  }  
@@ -37,6 +38,19 @@ void setup() {
 //  }
 //  strip.show();
 //}
+void turnColorOn(int c1, int c2, int c3) {
+  strip.clear();
+  strip.show(); // initialize to all off
+  for (int i=38; i<140; ++i) {
+    strip.setPixelColor(i, c1, c2, c3);
+  }
+  strip.show();
+}
+
+void turnColorOff() {
+  strip.clear();
+  strip.show(); // initialize to all off
+}
 
 void turnOnLED(int pos, int delayTime, int c1, int c2, int c3, int ledToAdd) {
   int posRight, posLeft;
@@ -107,16 +121,24 @@ void loop() {
     char receivedPos[] = {' ', ' ', ' ',' ', ' ', ' ', ' ',' ',' ', ' ', ' ',' ',' '};
     Serial.readBytesUntil('\n', receivedPos, 14);
     
-    char *pEnd;
-    int led, ledToAdd, c1, c2;
-
-    led = strtol(receivedPos, &pEnd, 10);
-    ledToAdd = strtol(pEnd, &pEnd, 10);
-    c1 = strtol(pEnd, &pEnd, 10);
-    c2 = strtol(pEnd, NULL, 10);
-
-//    data = atoi(receivedPos);
-//    Serial.print(data);
-    turnOnLED(led, 3000, c2, c1, 0, ledToAdd);
+    if (receivedPos[0] == '0') {
+      turnColorOn(255,0,0); // red
+    } else if (receivedPos[0] == '1') {
+      turnColorOn(0,255,0); // green
+    } else if (receivedPos[0] == '2') {
+      turnColorOn(0,0,255); // blue
+    } else if (receivedPos[0] == 'A'){
+      turnColorOff();
+    }
+    
+//    char *pEnd;
+//    int led, ledToAdd, c1, c2;
+//
+//    led = strtol(receivedPos, &pEnd, 10);
+//    ledToAdd = strtol(pEnd, &pEnd, 10);
+//    c1 = strtol(pEnd, &pEnd, 10);
+//    c2 = strtol(pEnd, NULL, 10);
+//
+//    turnOnLED(led, 3000, c2, c1, 0, ledToAdd);
   }
 }
